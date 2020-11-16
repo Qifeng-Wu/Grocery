@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeeplus.modules.vehicle.dao.VFeedbackDao">
+    
+	<sql id="vFeedbackColumns">
+		a.id AS "id",
+		a.openId AS "openId",
+		a.type AS "type",
+		a.description AS "description",
+		a.pictures AS "pictures",
+		a.createTime AS "createTime",
+		f.nickname AS "fans.nickname",			
+		f.avatar AS "fans.avatar"			
+	</sql>
+	
+	<sql id="vFeedbackJoins">
+		LEFT JOIN v_fans f ON f.openId = a.openId
+	</sql>
+    
+	<select id="get" resultType="VFeedback">
+		SELECT 
+			<include refid="vFeedbackColumns"/>
+		FROM v_feedback a
+		<include refid="vFeedbackJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="VFeedback">
+		SELECT 
+			<include refid="vFeedbackColumns"/>
+		FROM v_feedback a
+		<include refid="vFeedbackJoins"/>
+		<where>
+			<if test="openId != null and openId != ''">
+				AND a.openId = #{openId}				
+			</if>
+			<if test="fans != null and fans.openId != null and fans.openId != ''">
+				AND f.openId = #{openId}
+			</if>	
+			<if test="description != null and description != ''">
+				AND (a.description LIKE concat('%',#{description},'%')
+					OR a.type LIKE concat('%',#{description},'%'))				
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.createTime DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert" parameterType="VFeedback" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO v_feedback(
+			id,
+			openId,
+			type,
+			description,
+			pictures,
+			createTime
+		) VALUES (
+			#{id},
+			#{openId},
+			#{type},
+			#{description},
+			#{pictures},
+			#{createTime}
+		)
+	</insert>
+	
+	<update id="update" parameterType="VFeedback" useGeneratedKeys="true" keyProperty="id">
+		UPDATE v_feedback 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="openId != null">openId = #{openId},</if>
+			<if test="type != null">type = #{type},</if>
+			<if test="description != null">description = #{description},</if>
+			<if test="pictures != null">pictures = #{pictures},</if>
+			<if test="createTime != null">createTime = #{createTime}</if>
+		 </trim>
+		WHERE id = #{id}
+	</update>
+	
+	
+	<!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+	<select id="findUniqueByProperty" resultType="VFeedback" statementType="STATEMENT">
+		select * FROM v_feedback  where ${propertyName} = '${value}'
+	</select>
+	
+</mapper>

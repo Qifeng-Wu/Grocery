@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeeplus.modules.animal.dao.DWAnimalDao">
+    
+	<sql id="dwAnimalColumns">
+		a.animalId AS "animalId",
+		a.openId AS "openId",
+		a.account AS "account",
+		a.name AS "name",
+		a.no AS "no",
+		a.price AS "price",
+		a.profit AS "profit",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.remark AS "remark",
+		a.create_time AS "createTime",
+		f.nickname AS "fans.nickname",
+		f.avatar AS "fans.avatar"
+	</sql>
+	
+	<sql id="dwAnimalJoins">
+	    LEFT JOIN v_fans f ON f.openId = a.openId
+	</sql>
+    
+	<select id="get" resultType="DWAnimal">
+		SELECT 
+			<include refid="dwAnimalColumns"/>
+		FROM dw_animal a
+		<include refid="dwAnimalJoins"/>
+		WHERE a.animalId = #{animalId}
+	</select>
+	
+	<select id="findList" resultType="DWAnimal">
+		SELECT 
+			<include refid="dwAnimalColumns"/>
+		FROM dw_animal a
+		<include refid="dwAnimalJoins"/>
+		<where>
+			<if test="openId != null and openId != ''">
+				AND a.openId = #{openId}			
+			</if>	
+			<if test="fans != null and fans.openId != null and fans.openId != ''">
+				AND f.openId = #{openId}			
+			</if>	
+			<if test="name !=null and name !=''">
+			    AND (a.name  LIKE concat('%',#{name},'%')
+				OR a.account LIKE concat('%',#{name},'%')	
+				OR f.nickname LIKE concat('%',#{name},'%'))
+			</if>
+			<if test="startTime !=null">
+			    AND to_days(a.start_time) = to_days(#{startTime})
+			</if>
+			<if test="endTime !=null">
+			    AND to_days(a.end_time) = to_days(#{endTime})
+			</if>
+			<if test="timeType == 0"><!-- 获取今日待交易的动物记录 -->
+			    AND to_days(a.end_time) = to_days(now()) and a.end_time &gt; now()
+			</if>
+			<if test="timeType == 1"><!-- 获取今日交易的动物记录 -->
+			    AND to_days(a.end_time) = to_days(now())
+			</if>
+			<if test="timeType == 2"><!-- 获取未交易的动物记录 -->
+			    AND a.end_time &gt; now()
+			</if>
+			<if test="timeType == 3"><!-- 获取已交易的动物记录 -->
+			    AND a.end_time &lt; now()
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			    ORDER BY a.start_time DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO dw_animal(
+			openId,
+			account,
+			name,
+			no,
+			price,
+			profit,
+			start_time,
+			end_time,
+			create_time,
+			remark
+		) VALUES (
+			#{openId},
+			#{account},
+			#{name},
+			#{no},
+			#{price},
+			#{profit},
+			#{startTime},
+			#{endTime},
+			#{createTime},
+			#{remark}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE dw_animal 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="openId != null">openId = #{openId},</if>
+			<if test="account != null">account = #{account},</if>
+			<if test="name != null">name = #{name},</if>
+			<if test="no != null">no = #{no},</if>
+			<if test="price != null">price = #{price},</if>
+			<if test="profit != null">profit = #{profit},</if>
+			<if test="startTime != null">start_time = #{startTime},</if>
+			<if test="endTime != null">end_time = #{endTime},</if>
+			<if test="createTime != null">create_time = #{createTime},</if>
+			<if test="remark != null">remark = #{remark}</if>
+		 </trim>
+		WHERE animalId = #{animalId}
+	</update>
+	
+	
+	<!--物理删除-->
+	<update id="delete">
+		DELETE FROM dw_animal
+		WHERE animalId = #{animalId}
+	</update>
+	
+	<!-- 根据OPEMID获取该用户总投入成本、总利润 -->
+	<select id="findSum" resultType="java.util.HashMap">
+		select sum(price) as sumprice, sum(profit) as sumprofit from dw_animal where openId = #{openId}
+	</select>
+	
+	<!-- 根据OPEMID获取该用户未交易的动物的总投入成本、总利润 -->
+	<select id="findUnsoldSum" resultType="java.util.HashMap">
+		select sum(price) as sumprice, sum(profit) as sumprofit from dw_animal where openId = #{openId} and end_time &gt; now()
+	</select>
+</mapper>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeeplus.modules.vehicle.dao.VDataDao">	
+	<!-- 根据主键获取该用户使用天数 -->
+	<select id="fansUseDays" resultType="Integer">
+		SELECT TIMESTAMPDIFF(DAY,addtime,DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%S')) from v_fans where openId = #{openId}
+	</select>
+	
+	<!-- 根据主键获取该用户总计油费、总加油量、两次加油天数差 -->
+	<select id="fansFuelFee" resultType="java.util.HashMap">
+		select sum(money) as summoney, sum(money/price) as sumquantity, TIMESTAMPDIFF(DAY,min(time),DATE_FORMAT(max(time), '%Y-%m-%d %H:%i:%S')) as days from v_fuel where openId = #{openId}
+	</select>
+	
+	<!-- 根据主键获取加油记录第一条数据和最后一条数据 -->
+	<select id="findTwoVfuelList" resultType="VFuel">
+		(select * from v_fuel where openId = #{openId} order by time asc limit 1) 
+		union
+		(select * from v_fuel where openId = #{openId} order by time desc limit 1)
+	</select>
+	
+</mapper>
