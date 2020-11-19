@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jeeplus.modules.vehicle.dao.VFuelDao">
+    
+	<sql id="vFuelColumns">
+		a.fuelId AS "fuelId",
+		a.openId AS "openId",
+		a.price AS "price",
+		a.money AS "money",
+		a.cmileage AS "cmileage",
+		a.rest AS "rest",
+		a.oil AS "oil",
+		a.time AS "time",
+		a.createtime AS "createtime",
+		a.remark AS "remark",
+		f.nickname AS "fans.nickname",
+		f.avatar AS "fans.avatar"
+	</sql>
+	
+	<sql id="vFuelJoins">
+	    LEFT JOIN v_fans f ON f.openId = a.openId
+	</sql>
+    
+	<select id="get" resultType="VFuel">
+		SELECT 
+			<include refid="vFuelColumns"/>
+		FROM v_fuel a
+		<include refid="vFuelJoins"/>
+		WHERE a.fuelId = #{fuelId}
+	</select>
+	
+	<select id="findList" resultType="VFuel">
+		SELECT 
+			<include refid="vFuelColumns"/>
+		FROM v_fuel a
+		<include refid="vFuelJoins"/>
+		<where>
+			<if test="openId != null and openId != ''">
+				AND a.openId = #{openId}			
+			</if>	
+			<if test="fans != null and fans.openId != null and fans.openId != ''">
+				AND f.openId = #{openId}			
+			</if>	
+			<if test="oil !=null and oil !=''">
+			    AND (a.oil  LIKE concat('%',#{oil},'%')
+				OR f.nickname LIKE concat('%',#{oil},'%'))	
+			</if>
+			<if test="time !=null">
+			    AND (a.time  LIKE concat('%',#{time},'%'))	
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			    ORDER BY a.time DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO v_fuel(
+			openId,
+			price,
+			money,
+			cmileage,
+			rest,
+			oil,
+			time,
+			createtime,
+			remark
+		) VALUES (
+			#{openId},
+			#{price},
+			#{money},
+			#{cmileage},
+			#{rest},
+			#{oil},
+			#{time},
+			#{createtime},
+			#{remark}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE v_fuel 
+		<trim prefix="set" suffixOverrides=",">
+			<if test="openId != null">openId = #{openId},</if>
+			<if test="price != null">price = #{price},</if>
+			<if test="money != null">money = #{money},</if>
+			<if test="cmileage != null">cmileage = #{cmileage},</if>
+			<if test="rest != null">rest = #{rest},</if>
+			<if test="oil != null">oil = #{oil},</if>
+			<if test="time != null">time = #{time},</if>
+			<if test="createtime != null">createtime = #{createtime},</if>
+			<if test="remark != null">remark = #{remark}</if>
+		 </trim>
+		WHERE fuelId = #{fuelId}
+	</update>
+	
+	
+	<!--物理删除-->
+	<update id="delete">
+		DELETE FROM v_fuel
+		WHERE fuelId = #{fuelId}
+	</update>
+	
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE v_fuel SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE fuelId = #{fuelId}
+	</update>
+</mapper>

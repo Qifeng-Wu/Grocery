@@ -275,7 +275,12 @@
 	     				<a class="J_menuItem" href="${ctx}/vehicle/feedback/list" data-index="25">
 	     					<i class="fa  fa-cubes"></i> <span class="nav-label">意见反馈管理</span>
 	     				</a>
-     				</li> 				
+     				</li>
+     				<li>
+	     				<a class="J_menuItem" href="${ctx}/dw/animal/list" data-index="25">
+	     					<i class="fa  fa-cubes"></i> <span class="nav-label">动物世界管理</span>
+	     				</a>
+     				</li>  				
 				   </c:when>   
 				   <c:otherwise>
 						<li>
